@@ -1,16 +1,12 @@
 #ifndef muBN_H
 #define muBN_H
 
-#include <stdint.h>
-
-#define UBN_LITTLE_ENDIAN
-#define UBN_BITS_PER_WORD        32UL
+#include "muBN_config.h"
 
 /*
  * muBN are big endian order of native word.
  * native word are either little or big endian
  */
-
 
 #if UBN_BITS_PER_WORD == 32
 #define UBN_LOG2_BITS_PER_WORD   4UL
@@ -206,7 +202,6 @@ muBN_word_t   muBN_is_odd (muBN_t *r);
 /**
  *  r= r >> n
  *
- * @test
  * @spa
  */
 void muBN_rshift  (muBN_t *r, muBN_size_t n);
@@ -214,7 +209,6 @@ void muBN_rshift  (muBN_t *r, muBN_size_t n);
 /**
  *  r= r >>> n
  *
- * @test
  * @spa
  */
 void muBN_urshift (muBN_t *r, muBN_size_t n); 
@@ -223,7 +217,6 @@ void muBN_urshift (muBN_t *r, muBN_size_t n);
  *  r= r >> 1
  *
  * @spa
- * @test
  */
 void  muBN_rshift1 (muBN_t *r);
 
@@ -231,7 +224,6 @@ void  muBN_rshift1 (muBN_t *r);
  *  r= r >>> 1
  *
  * @spa
- * @test
  */
 void muBN_urshift1(muBN_t *r);
 
@@ -240,7 +232,6 @@ void muBN_urshift1(muBN_t *r);
  *  clear carry
  *
  * @spa
- * @test
  */
 void  muBN_rshift1c(muBN_t *r);
 
@@ -257,15 +248,13 @@ void  muBN_rshiftc (muBN_t *r, muBN_size_t  n);
  *  r= r << 1
  *  clear carry
  *
- * @test
  * @spa
  */
 void  muBN_lshift1(muBN_t *r);
 
 /**
  *  r= r << 1
-  *
- * @test
+ *
  * @spa
  */
 muBN_uword_t muBN_lshift1c(muBN_t *r);
@@ -274,7 +263,6 @@ muBN_uword_t muBN_lshift1c(muBN_t *r);
  *  r= r << n
  *  clear carry
  *
- * @test
  * @spa
  */
 void  muBN_lshift (muBN_t *r, muBN_size_t  n);
@@ -282,35 +270,30 @@ void  muBN_lshift (muBN_t *r, muBN_size_t  n);
 /**
  *  r= a + b
  *
- * @test
  * @spa
  */
 muBN_word_t muBN_add(muBN_t *r,  muBN_t *a, muBN_t *b);
 /**
  *  r= a + b
  *
- * @test
  * @spa
  */
 muBN_word_t muBN_add_uword(muBN_t *r,  muBN_t *a, muBN_uword_t b);
 /**
  *  r= a - b
  *
- * @test
  * @spa
  */
 muBN_word_t   muBN_sub(muBN_t *r,  muBN_t *a, muBN_t *b);
 /**
  *  r=a - b
  *
- * @test
  * @spa
  */
 muBN_word_t muBN_sub_uword(muBN_t *r,  muBN_t *a, muBN_uword_t b);
 /**
  *  r= a * b
  *
- * @test
  * @spa
  */
 void muBN_mul(muBN_t *r, muBN_t *a, muBN_t *b);
@@ -318,7 +301,6 @@ void muBN_mul(muBN_t *r, muBN_t *a, muBN_t *b);
 /**
  *  r= a * w
  *
- * @test
  * @spa
  */
 void  muBN_mul_uword(muBN_t *r, muBN_t *a, muBN_uword_t w);
@@ -328,6 +310,7 @@ void  muBN_mul_uword(muBN_t *r, muBN_t *a, muBN_uword_t w);
  * compare signed BN to zero 
  * @return 1 if  a  = ZERO
  * @return 0 if  a != ZERO 
+ * @spa
  */
 muBN_word_t   muBN_is_zero_sec(muBN_t *r);
 
@@ -335,6 +318,7 @@ muBN_word_t   muBN_is_zero_sec(muBN_t *r);
  * compare signed BN to one 
  * @return 1 if  a  = ONE
  * @return 0 if  a != ONE 
+ * @spa
  */
 muBN_word_t   muBN_is_one_sec(muBN_t *r);
 
@@ -342,19 +326,19 @@ muBN_word_t   muBN_is_one_sec(muBN_t *r);
  * compare unsigned BN
  * @return  0 if  a = b
  * @return  1 if  a !=  b
-
+ * @spa
  */
 muBN_word_t   muBN_ucmp_sec(muBN_t *a,  muBN_t *b );
 /**
  * compare unsigned BN
  * @return  0 if  a = b
  * @return  1 if  a !=  b
+ * @spa
  */
 muBN_word_t   muBN_cmp_sec(muBN_t *a,  muBN_t *b );
 
 /**
- *  r= 
- *
+ *  randomize r
  */
 void  muBN_rand(muBN_t *r);
 
@@ -369,7 +353,6 @@ void  muBN_rand(muBN_t *r);
  * @param m 
  * @param temp  temporary buffer with a word length a least equals to a.wlen*2 + 2 
  *
- * @test
  */
 void muBN_mod(muBN_t *r,  muBN_t *a, muBN_t *m, muBN_uword_t  *tmp);
 
@@ -388,31 +371,19 @@ void  muBN_mod_mul(muBN_t *r,  muBN_t *a, muBN_t *b, muBN_t *m,  muBN_uword_t *t
  * @return 1 if inverse exist
  * @return 0 else
  *
- * @test
  */
 muBN_word_t muBN_mod_inv(muBN_t *r, muBN_t *a, muBN_t *m,  muBN_uword_t *temp) ;
 
 /*** Secured function ***/
-
+/*
+ * r = a+b mod m 
+ */
 void  muBN_mod_add_sec(muBN_t *r,  muBN_t *a, muBN_t *b, muBN_t *m, muBN_uword_t  *tmp);
+/*
+ * r = a-b mod m 
+ */
 void  muBN_mod_sub_sec(muBN_t *r,  muBN_t *a, muBN_t *b, muBN_t *m, muBN_uword_t  *tmp);
 
-/**
- * r = a⁻¹ mod m 
- * 
- * @param r 
- * @param a 
- * @param m     prime moduli
- * @param temp  temporary buffer with a word length a least equals to m.wlen*5
- *
- * @return 1 if inverse exist
- * @return 0 else
- *
- * @security a is randomized, before calling muBN_fast_mod_inv
- * @test
- */
-muBN_word_t  muBN_mod_inv_sec(muBN_t *r, muBN_t *a,  muBN_t *m,  muBN_uword_t j0,
-                        muBN_uword_t *temp);
 
 /* ======================================================================================= */
 /*                                Mongomery  Arithmetic                                    */
