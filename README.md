@@ -1,1 +1,1 @@
-# uCrypt
+# muCrypt
