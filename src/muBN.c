@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2015-2016, Ubinity SAS, cedric.mesnil@ubinity.com
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "muBN.h"
 
 /* ======================================================================================= */
@@ -476,14 +492,14 @@ muBN_word_t   muBN_is_one_sec(muBN_t *r) {
   return (d==1);
 }
 
-
+/*
 muBN_word_t   muBN_is_even(muBN_t *r) { 
   return !(r->v[r->wlen-1]&1);
 }
 muBN_word_t   muBN_is_odd(muBN_t *r) { 
   return r->v[r->wlen-1]&1;
 }
-
+*/
 // r = r>>1
 void muBN_rshift1(muBN_t *r) {  
   r->C = (r->v[0]&UBN_WORD_HIGH_BIT)?1:0;
@@ -865,8 +881,8 @@ void muBN_mul_uword(muBN_t *r, muBN_t *a, muBN_uword_t w) {
 /* ======================================================================================= */
 
 
-muBN_word_t muBN_mod_inv(muBN_t *r, muBN_t *in, muBN_t *m,  muBN_uword_t *temp) {
 
+muBN_word_t muBN_mod_inv(muBN_t *r, muBN_t *in, muBN_t *m,  muBN_uword_t *temp) {
   muBN_t u, v,  a, b;
 
   muBN_init_zero(&u, temp+m->wlen*0, m->wlen);
@@ -924,7 +940,6 @@ muBN_word_t muBN_mod_inv(muBN_t *r, muBN_t *in, muBN_t *m,  muBN_uword_t *temp) 
     return 0;
   }
 }
-
 
 //r = a % m, 
 void muBN_mod(muBN_t *r,  muBN_t *b, muBN_t *m, muBN_uword_t  *tmp)  {
@@ -1227,8 +1242,15 @@ muBN_uword_t muBN_mgt_cst(muBN_t *m, muBN_t *j1, muBN_uword_t *temp) {
 
 }
 
-muBN_uword_t muBN_mgt_inv(muBN_t *r, muBN_t *a, muBN_t *m,  muBN_uword_t j0, muBN_t *j1,
-                        muBN_uword_t *temp) {
+muBN_uword_t muBN_mgt_inv_internal(muBN_t *r, muBN_t *a, muBN_t *m,
+                                   muBN_uword_t *temp,
+                                   muBN_uword_t mode) {
+  
+  /* mode:
+   *  0: no phase 2
+   *  1: mgt phase 2, input is in montgomery form  a.R
+   *  2: Z phase 2, input is in Z/mZ space
+   */
   muBN_t ubn_u, ubn_v, ubn_x2;
   muBN_size_t k;
 #define x1 r
@@ -1279,33 +1301,57 @@ muBN_uword_t muBN_mgt_inv(muBN_t *r, muBN_t *a, muBN_t *m,  muBN_uword_t j0, muB
   if (muBN_ucmp(r,m)>0) {
     muBN_sub(r,r,m);
   }
-  k = (2*(m->wlen*sizeof(muBN_uword_t))*8)-k;
+
+  switch (mode) {
+  case 1:
+    k = (2*(m->wlen*sizeof(muBN_uword_t))*8)-k;
 #if 0
-  //v = 2^(2n-k)
-  muBN_one(vv);
-  muBN_lshift(vv,k); 
-  muBN_mgt_mul(uu, r, j1, m, j0);
-  muBN_mgt_mul(r, uu, vv,  m, j0);
+    //v = 2^(2n-k)
+    muBN_one(vv);
+    muBN_lshift(vv,k); 
+    muBN_mgt_mul(uu, r, j1, m, j0);
+    muBN_mgt_mul(r, uu, vv,  m, j0);
 #else
-  while (k--) {
-    if(muBN_lshift1c(r)) {
-      muBN_sub(r,r,m);
+    while (k--) {
+      if(muBN_lshift1c(r)) {
+        muBN_sub(r,r,m);
+      }
+      if (muBN_ucmp(r,m)>=0) {
+        muBN_sub(r,r,m);
+      }
     }
-    if (muBN_ucmp(r,m)>=0) {
-      muBN_sub(r,r,m);
+#endif
+    break;
+    
+  case 2:
+    while (k--) {
+      if (!muBN_is_even(r)) {
+         muBN_add(r,r,m);
+      }
+      muBN_urshift1c(r); 
     }
+    break;
+
+  default :
+    return k;
   }
-#endif  
-  return 1;
+  
+  return  1;
 }
 
+muBN_uword_t muBN_mgt_inv(muBN_t *r, muBN_t *a, muBN_t *m,
+                          muBN_uword_t *temp) {
+  return muBN_mgt_inv_internal(r,a,m,temp,1);
+}
+                                          
 
 void muBN_mgt_mul(muBN_t *r,  muBN_t *a, muBN_t *b, muBN_t *m,  muBN_uword_t j0) {
   /*                    a          x         y         m */
   muBN_udword_t dwRk, dwSk, dwTk;
-  muBN_udword_t ui,ai, r0, b0,carry;
-  muBN_uword_t  r0C;
-  muBN_size_t  wlen;
+  
+  muBN_udword_t carry;
+  muBN_uword_t  b0, r0, ai, ui,r0C;
+  muBN_size_t   wlen;
   muBN_size_t   i,j;
   
   r0C = 0;
@@ -1318,19 +1364,19 @@ void muBN_mgt_mul(muBN_t *r,  muBN_t *a, muBN_t *b, muBN_t *m,  muBN_uword_t j0)
     //2. ui = (r0+ai*b0)*j0
     ai = a->v[i];
     r0 = r->v[j];
-    ui = ((r0 + ai*b0)*j0)&UBN_WORD_BIT_MASK;
+    ui = ((r0 + ai*b0)*j0);
     //3. r = (r + ai*b + ui*m) / base
     // unroll first loop, and discard LSB word, only keep carry
-    dwSk = ui*m->v[j];
-    dwTk = ai*b->v[j];    
+    dwSk = (muBN_udword_t)ui*m->v[j];
+    dwTk = (muBN_udword_t)ai*b->v[j];    
     dwRk = r0+(dwSk&UBN_WORD_BIT_MASK)+(dwTk&UBN_WORD_BIT_MASK);
     carry = 
       (dwSk>>(UBN_BITS_PER_WORD)) +
       (dwTk>>(UBN_BITS_PER_WORD)) +
       (dwRk>>(UBN_BITS_PER_WORD)) ;
     for (j = wlen-2; j >=0; j--) {
-      dwSk = ui*m->v[j];
-      dwTk = ai*b->v[j];
+      dwSk = (muBN_udword_t)ui*m->v[j];
+      dwTk = (muBN_udword_t)ai*b->v[j];
       dwRk =
         r->v[j] +
         (dwSk&UBN_WORD_BIT_MASK)+
@@ -1352,16 +1398,16 @@ void muBN_mgt_mul(muBN_t *r,  muBN_t *a, muBN_t *b, muBN_t *m,  muBN_uword_t j0)
   if (r0C | (muBN_ucmp(r,m)>0)) {
     while (wlen--) {
       r0         = r->v[wlen];
-      ui        = (muBN_udword_t)(r->v[wlen])-(muBN_udword_t)(m->v[wlen])-carry;
-      r->v[wlen] = ui;
-      carry      = (ui >> UBN_BITS_PER_WORD)?1:0;
+      carry        = (muBN_udword_t)(r->v[wlen])-(muBN_udword_t)(m->v[wlen])-carry;
+      r->v[wlen] = carry;
+      carry      = (carry >> UBN_BITS_PER_WORD)?1:0;
     }
   } else {
     while (wlen--) {
       r0         = r->v[wlen];
-      ui        = (muBN_udword_t)(r->v[wlen])-(muBN_udword_t)(m->v[wlen])-carry;
+      carry        = (muBN_udword_t)(r->v[wlen])-(muBN_udword_t)(m->v[wlen])-carry;
       r->v[wlen] = r0;
-      carry      = (ui >> UBN_BITS_PER_WORD)?1:0;      
+      carry      = (carry >> UBN_BITS_PER_WORD)?1:0;      
     }
   }
 }
